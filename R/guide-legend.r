@@ -172,7 +172,7 @@ guide_train.legend <- function(guide, scale) {
   breaks <- scale_breaks(scale)
   key <- data.frame(
     values = scale_map(scale, breaks),
-    labels = scale_labels(scale),
+    labels = I(scale_labels(scale)),
     stringsAsFactors = FALSE)
 
   ## this is a quick fix for #118
