@@ -77,4 +77,5 @@ icon.facet_null <- function(.) {
   ))
 }  
 
+#' @S3method facet_vars null
 facet_vars.null <- function(facet) ""
