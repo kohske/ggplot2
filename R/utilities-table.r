@@ -153,7 +153,7 @@ gtable_add_row_space <- function(x, height) {
 # Combine with other layouts -----------------------------------------------
 
 #' @S3method rbind gtable
-rbind.gtable <- function(..., pos = nrow(x)) {
+rbind.gtable <- function(..., pos = nrow(x), width = c("x", "y", "min", "max")) {
   tables <- list(...)
   stopifnot(length(tables) == 2)
 
@@ -165,6 +165,14 @@ rbind.gtable <- function(..., pos = nrow(x)) {
   if (nrow(y) == 0) return(x)
   
   x$heights <- insert.unit(x$heights, y$heights, pos)
+  
+  width <- match.arg(width)
+  x$widths <- switch(width,
+    x = x$widths,
+    y = y$widths,
+    min = unit.pmin(x$widths, y$widths),
+    max = unit.pmax(x$widths, y$widths))
+  
   x$grobs <- append(x$grobs, y$grobs)
   
   y$layout$t <- y$layout$t + pos 
@@ -173,12 +181,13 @@ rbind.gtable <- function(..., pos = nrow(x)) {
   x$layout$t <- ifelse(x$layout$t > pos, x$layout$t + nrow(y), x$layout$t)
   x$layout$b <- ifelse(x$layout$b > pos, x$layout$b + nrow(y), x$layout$b)
 
+
   x$layout <- rbind(x$layout, y$layout)
   x
 }
 
 #' @S3method cbind gtable
-cbind.gtable <- function(..., pos = ncol(x)) {
+cbind.gtable <- function(..., pos = ncol(x), height = c("x", "y", "min", "max")) {
   tables <- list(...)
   stopifnot(length(tables) == 2)
 
@@ -190,6 +199,14 @@ cbind.gtable <- function(..., pos = ncol(x)) {
   if (ncol(y) == 0) return(x)
   
   x$widths <- insert.unit(x$widths, y$widths, pos)
+
+  height <- match.arg(height)
+  x$heights <- switch(height,
+    x = x$heights,
+    y = y$heights,
+    min = unit.pmin(x$heights, y$heights),
+    max = unit.pmax(x$heights, y$heights))
+
   x$grobs <- append(x$grobs, y$grobs)
   
   y$layout$l <- y$layout$l + pos 
