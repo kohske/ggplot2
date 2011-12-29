@@ -52,8 +52,8 @@ facet_render.null <- function(facet, panel, coord, theme, geom_grobs) {
   all <- matrix(list(
     axis_v,     panel_grob,
     zeroGrob(), axis_h
-  ), ncol = 2, byrow = T)
-
+  ), ncol = 2, byrow = TRUE)
+  
   layout <- layout_matrix("layout", all, 
     widths = unit.c(grobWidth(axis_v), unit(1, "null")),
     heights = unit.c(unit(aspect_ratio, "null"), grobHeight(axis_h)),
