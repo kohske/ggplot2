@@ -1,3 +1,4 @@
+
 # list of plot
 p <- lapply(1:10, function(i) ggplot(mtcars, aes(factor(cyl))) + geom_bar(fill = rainbow(10)[i]) + opts(title = paste(i)))
 
