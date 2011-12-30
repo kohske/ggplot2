@@ -22,9 +22,6 @@
 
   \item{respect}{not implemented. see ?layout.}
 
-  \item{grid}{logical specifing if \code{grid.layout} is
-  generated.}
-
   \item{nrow}{number of rows of grid.}
 
   \item{ncol}{number of columns of grid.}

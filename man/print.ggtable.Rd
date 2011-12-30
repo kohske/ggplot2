@@ -1,6 +1,5 @@
 \name{print.ggtable}
 \alias{print.ggtable}
-\title{Draw plot on current graphics device.}
 \usage{
   \method{print}{ggtable} (x, newpage = is.null(vp),
     vp = NULL, ...)
@@ -13,9 +12,6 @@
   \item{vp}{viewport to draw plot in}
 
   \item{...}{other arguments not used by this method}
-}
-\description{
-  Draw plot on current graphics device.
 }
 \examples{
 p1 <- ggplot(economics, aes(date, pce)) + geom_point()

@@ -197,4 +197,5 @@ Collate:
     'autoplot.r'
     'zzz.r'
     'fortify-multcomp.r'
-    'plot-layout.r'
+    'ggarrange.r'
+    'gglayout.r'
