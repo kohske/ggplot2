@@ -199,3 +199,4 @@ Collate:
     'fortify-multcomp.r'
     'ggarrange.r'
     'gglayout.r'
+    'ggtable.r'

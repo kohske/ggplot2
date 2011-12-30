@@ -21,8 +21,8 @@
 #' @param layout gglayout object.
 #' @param newpage draw new (empty) page first?
 #' @param vp viewport to draw plot in
-#' @S3method print ggtable
 #' @seealso \code{\link{gglayout}} for methods generating flexible layout.
+#' @seealso \code{\link{gglayout}} for methods generating flexible layout. \code{\link{ggtable}} for size sensitive arrangement.
 #' @examples
 #' # list of plot
 #' p <- lapply(1:10, function(i) ggplot(mtcars, aes(factor(cyl))) + geom_bar(fill = rainbow(10)[i]) + opts(title = paste(i)))
@@ -86,9 +86,9 @@ ggarrange <- function(..., plots = NULL, dim = NULL, nrow = dim[1], ncol = dim[2
                       layout = NULL, newpage = is.null(vp), vp = NULL) {
   # detect plots
   if (is.null(plots)) plots <- list(...)
+  plots <- Filter(function(x) any(inherits(x, c("ggtable", "ggplot"))), plots)
   np <- length(plots)
   if (np == 0) return
-  plots <- Filter(function(x) inherits(x, "ggplot"), plots)
 
   if (is.null(layout)) {
     # if layout is NULL, the plots are automatically placed in that order.

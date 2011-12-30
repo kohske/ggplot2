@@ -111,5 +111,9 @@ ggarrange(plots = c(p[1:4], list(p2p, p2g)))
 \seealso{
   \code{\link{gglayout}} for methods generating flexible
   layout.
+
+  \code{\link{gglayout}} for methods generating flexible
+  layout. \code{\link{ggtable}} for size sensitive
+  arrangement.
 }
 
