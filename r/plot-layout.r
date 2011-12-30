@@ -169,6 +169,16 @@ print.gglayout <- function(lay) {
 #'     4, 5, 6), 2, byrow = T)
 #' lay <- gglayout(m, widths = c(1, 1.5, 2), heights = seq(1, 2))
 #' ggarrange(plots = p[1:6], layout = lay)
+#'
+#' # work with separate guide
+#' # plot
+#' p2 <- qplot(1:3, 1:3, colour = 1:3)
+#' # without guide
+#' p2p <- p2 + opts(legend.position = "none")
+#' # only guide
+#' p2g <- p2 + opts(keep = "guide")
+#' # plot and guide in separate sell
+#' ggarrange(plots = c(p[1:4], list(p2p, p2g)))
 ggarrange <- function(..., plots = NULL, dim = NULL, nrow = dim[1], ncol = dim[2], byrow = TRUE, widths = NULL, heights = NULL, respect = FALSE,
                       layout = NULL, newpage = is.null(vp), vp = NULL) {
   # detect plots
