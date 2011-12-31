@@ -200,3 +200,4 @@ Collate:
     'ggarrange.r'
     'gglayout.r'
     'ggtable.r'
+    'annotation-custom.r'
