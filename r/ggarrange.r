@@ -23,6 +23,7 @@
 #' @param vp viewport to draw plot in
 #' @seealso \code{\link{gglayout}} for methods generating flexible layout.
 #' @seealso \code{\link{gglayout}} for methods generating flexible layout. \code{\link{ggtable}} for size sensitive arrangement.
+#' @export
 #' @examples
 #' # list of plot
 #' p <- lapply(1:10, function(i) ggplot(mtcars, aes(factor(cyl))) + geom_bar(fill = rainbow(10)[i]) + opts(title = paste(i)))
