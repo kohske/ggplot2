@@ -14,6 +14,7 @@
 #' @S3method gglayout matrix
 #' @S3method gglayout default
 #' @seealso \code{\link{layout}}, \code{\link{grid.layout}}, \code{\link{viewport}}.
+#' @export
 #' @examples
 #' layout as matrix
 #' m <- matrix(

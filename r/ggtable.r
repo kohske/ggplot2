@@ -17,6 +17,7 @@
 #' @param respect not implemented. see ?layout.
 #' @param layout gglayout object.
 #' @seealso \code{\link{gglayout}} for methods generating flexible layout. \code{\link{ggarrange}} for simple arrangement.
+#' @export
 #' @examples
 #' # list of plot
 #' p <- lapply(1:10, function(i) ggplot(mtcars, aes(factor(cyl))) + geom_bar(fill = rainbow(10)[i]) + theme_grey(base_size = i*5))
