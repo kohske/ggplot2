@@ -145,12 +145,26 @@ ggplot_gtable <- function(data) {
   plot_table <- gtable_add_rows(plot_table, theme$plot.margin[3])
   plot_table <- gtable_add_cols(plot_table, theme$plot.margin[4], pos = 0)
 
+  ## opts(keep = "guide") drops main panel
+  keep <- plot$options$keep
+  if (!is.null(keep) && charmatch(keep, c("guide", "legend"))) {
+    ggi <- which(plot_table$layout$name == "guide-box")
+    if (length(ggi) > 0) {
+      g <- plot_table$grob[[ggi]]
+    } else {
+      warning('opts(keep = "guide") was detected but there is no guides.')
+      g <- zeroGrob()
+    }
+    plot_table <- gtable_add_grob(gtable(widths = 1, heights = 1), g, 1, 1, 1, 1)
+  }
+
   if (inherits(theme$plot.background, "theme")) {
     plot_table <- gtable_add_grob(plot_table, theme_render(theme, "plot.background", vp = "background"),
                                   t = 1, l = 1, b = length(plot_table$heights), r = length(plot_table$widths))
     plot_table$layout <- plot_table$layout[c(nrow(plot_table$layout), 1:(nrow(plot_table$layout) - 1)),]
     plot_table$grobs <- plot_table$grobs[c(nrow(plot_table$layout), 1:(nrow(plot_table$layout) - 1))]
   }
+  
   plot_table
 }
 
@@ -170,18 +184,6 @@ print.ggplot <- function(x, newpage = is.null(vp), vp = NULL, ...) {
   data <- ggplot_build(x)
   gtable <- ggplot_gtable(data)
 
-  ## opts(keep = "guide") drops main panel
-  keep <- x$options$keep
-  if (!is.null(keep) && charmatch(keep, c("guide", "legend"))) {
-    ggi <- which(gtable$layout$name == "guide-box")
-    if (length(ggi) > 0) {
-      gtable <- gtable$grob[[ggi]]
-    } else {
-      warning('opts(keep = "guide") was detected but there is no guides.')
-      gtable <- zeroGrob()
-    }
-  }
-  
   if (is.null(vp)) {
     grid.draw(gtable) 
   } else {
