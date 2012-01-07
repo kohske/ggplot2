@@ -19,9 +19,7 @@
 #' @param heights relative heights of each row, or unit object.
 #' @param respect not implemented. see ?layout.
 #' @param layout gglayout object.
-#' @param newpage draw new (empty) page first?
-#' @param vp viewport to draw plot in
-#' @seealso \code{\link{gglayout}} for methods generating flexible layout.
+#' @return ggarrange object that inherits gtable.
 #' @seealso \code{\link{gglayout}} for methods generating flexible layout. \code{\link{ggtable}} for size sensitive arrangement.
 #' @export
 #' @examples
@@ -84,7 +82,7 @@
 #' # plot and guide in separate sell
 #' ggarrange(plots = c(p[1:4], list(p2p, p2g)))
 ggarrange <- function(..., plots = NULL, dim = NULL, nrow = dim[1], ncol = dim[2], byrow = TRUE, widths = NULL, heights = NULL, respect = FALSE,
-                      layout = NULL, newpage = is.null(vp), vp = NULL) {
+                      layout = NULL) {
   # detect plots
   if (is.null(plots)) plots <- list(...)
   plots <- Filter(function(x) any(inherits(x, c("ggtable", "ggplot"))), plots)
@@ -129,24 +127,28 @@ ggarrange <- function(..., plots = NULL, dim = NULL, nrow = dim[1], ncol = dim[2
     layout$col <- layout$col[1:np]
   }
 
+  lay <- data.frame(t(rbind(sapply(layout$row, range), sapply(layout$col, range))))
+  names(lay) <- c("t", "b", "l", "r")
+  g <- gtable(widths = layout$widths, heights = layout$heights)
+  g <- gtable_add_grob(g, grobs = lapply(plots, ggplotGrob), t = lay$t, l = lay$l, b = lay$b, r = lay$r)
+  class(g) <- c("ggarrange", class(g))
+  g
+}
+
+#' print ggarrange object
+#'
+#' @inheritParams geom_point
+#' @param x ggarrange object to display
+#' @S3method print ggarrange
+#' @method print ggarrange
+print.ggarrange <- function(x, newpage = is.null(vp), vp = NULL, ...) {
   if (newpage) grid.newpage()
-
-  draw <- function() {
-    vp <- function(r, c) viewport(layout.pos.row = r, layout.pos.col = c)
-    d <- function(p, r, c) print(p, vp = vp(r, c))
-
-    pushViewport(viewport(layout = gglayout_grid(layout)))
-    mapply(d, plots, layout$row, layout$col)
-    upViewport()
-  }
-  
   if (is.null(vp)) {
-    draw()
+    grid.draw(x)
   } else {
     if (is.character(vp)) seekViewport(vp) else pushViewport(vp)
-    draw()
+    grid.draw(x)
     upViewport()
   }
   invisible()
-  
 }

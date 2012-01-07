@@ -16,6 +16,7 @@
 #' @param heights relative heights of each row, or unit object.
 #' @param respect not implemented. see ?layout.
 #' @param layout gglayout object.
+#' @return ggtable object that inherits gtable class.
 #' @seealso \code{\link{gglayout}} for methods generating flexible layout. \code{\link{ggarrange}} for simple arrangement.
 #' @export
 #' @examples

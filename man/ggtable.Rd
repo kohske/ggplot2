@@ -31,6 +31,9 @@
 
   \item{layout}{gglayout object.}
 }
+\value{
+  ggtable object that inherits gtable class.
+}
 \description{
   Current limitation (i.e., TODO) - cannot handle different
   nrow/ncol plots (i.e., extra plot parts such as title or

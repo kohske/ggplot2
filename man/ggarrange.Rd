@@ -4,8 +4,7 @@
 \usage{
   ggarrange(..., plots = NULL, dim = NULL, nrow = dim[1],
     ncol = dim[2], byrow = TRUE, widths = NULL,
-    heights = NULL, respect = FALSE, layout = NULL,
-    newpage = is.null(vp), vp = NULL)
+    heights = NULL, respect = FALSE, layout = NULL)
 }
 \arguments{
   \item{...}{plot to display}
@@ -31,10 +30,9 @@
   \item{respect}{not implemented. see ?layout.}
 
   \item{layout}{gglayout object.}
-
-  \item{newpage}{draw new (empty) page first?}
-
-  \item{vp}{viewport to draw plot in}
+}
+\value{
+  ggarrange object that inherits gtable.
 }
 \description{
   If \code{dim}, \code{nrow}, \code{ncol} and \code{layout}
@@ -109,9 +107,6 @@ p2g <- p2 + opts(keep = "guide")
 ggarrange(plots = c(p[1:4], list(p2p, p2g)))
 }
 \seealso{
-  \code{\link{gglayout}} for methods generating flexible
-  layout.
-
   \code{\link{gglayout}} for methods generating flexible
   layout. \code{\link{ggtable}} for size sensitive
   arrangement.
