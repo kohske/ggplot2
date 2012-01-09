@@ -201,3 +201,5 @@ Collate:
     'gglayout.r'
     'ggtable.r'
     'annotation-custom.r'
+    'as.grob.r'
+

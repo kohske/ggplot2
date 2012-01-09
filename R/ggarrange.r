@@ -131,11 +131,7 @@ ggarrange <- function(..., plots = NULL, dim = NULL, nrow = dim[1], ncol = dim[2
   lay <- data.frame(t(rbind(sapply(layout$row, range), sapply(layout$col, range))))
   names(lay) <- c("t", "b", "l", "r")
   g <- gtable(widths = layout$widths, heights = layout$heights)
-  grobs <- lapply(plots,
-                  function(g)
-                  if (inherits(g, "ggtable")) gtable_gTree(g)
-                  else if (inherits(g, "ggplot")) ggplotGrob(g)
-                  else if (inherits(g, "grob")) g)
+  grobs <- lapply(plots, as.grob)
   g <- gtable_add_grob(g, grobs = grobs, t = lay$t, l = lay$l, b = lay$b, r = lay$r)
 
   # add main title
