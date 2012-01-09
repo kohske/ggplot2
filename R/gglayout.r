@@ -52,6 +52,19 @@ gglayout.matrix <- function(mat, widths = rep(1, ncol(mat)), heights = rep(1, nr
   
   inds <- sort(unique(c(mat)))
   inds <- inds[!is.na(inds) & 0 < inds]
+
+  # ensure all submatrix are rectangle
+  rects <- sapply(inds, function(i) {
+    m0 <- array(FALSE, dim(mat))
+    is <- which(mat == i, arr.ind=T)
+    m0[seq(min(is[, 1]), max(is[, 1])), seq(min(is[, 2]), max(is[, 2]))] <- TRUE
+    is <- which(m0)
+    all(mat[is] == i) && all(mat[-is] != i)
+  })
+  if (!all(rects)) {
+    stop("matrix includes non-rectanglar submatrix: ", paste(which(!rects), collapse = " "))
+  }
+
   coo <- llply(inds, function(x) {
     ind <- which(mat == x, arr.ind = T)
     list(row = range(ind[, "row"]), col = range(ind[, "col"]))
