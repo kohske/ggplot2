@@ -4,7 +4,8 @@
 \usage{
   ggarrange(..., plots = NULL, dim = NULL, nrow = dim[1],
     ncol = dim[2], byrow = TRUE, widths = NULL,
-    heights = NULL, respect = FALSE, layout = NULL)
+    heights = NULL, respect = FALSE, layout = NULL,
+    main = NULL)
 }
 \arguments{
   \item{...}{plot to display}
@@ -30,6 +31,8 @@
   \item{respect}{not implemented. see ?layout.}
 
   \item{layout}{gglayout object.}
+
+  \item{main}{main title of the plot.}
 }
 \value{
   ggarrange object that inherits gtable.
