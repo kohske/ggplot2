@@ -19,6 +19,7 @@
 #' @param heights relative heights of each row, or unit object.
 #' @param respect not implemented. see ?layout.
 #' @param layout gglayout object.
+#' @param main main title of the plot.
 #' @return ggarrange object that inherits gtable.
 #' @seealso \code{\link{gglayout}} for methods generating flexible layout. \code{\link{ggtable}} for size sensitive arrangement.
 #' @export
@@ -82,7 +83,7 @@
 #' # plot and guide in separate sell
 #' ggarrange(plots = c(p[1:4], list(p2p, p2g)))
 ggarrange <- function(..., plots = NULL, dim = NULL, nrow = dim[1], ncol = dim[2], byrow = TRUE, widths = NULL, heights = NULL, respect = FALSE,
-                      layout = NULL) {
+                      layout = NULL, main = NULL) {
   # detect plots
   if (is.null(plots)) plots <- list(...)
   plots <- Filter(function(x) any(inherits(x, c("ggtable", "ggplot", "grob"))), plots)
@@ -136,6 +137,14 @@ ggarrange <- function(..., plots = NULL, dim = NULL, nrow = dim[1], ncol = dim[2
                   else if (inherits(g, "ggplot")) ggplotGrob(g)
                   else if (inherits(g, "grob")) g)
   g <- gtable_add_grob(g, grobs = grobs, t = lay$t, l = lay$l, b = lay$b, r = lay$r)
+
+  # add main title
+  if (!is.null(main)) {
+    txt <- textGrob(main)
+    g <- gtable_add_rows(g, grobHeight(txt) * 2, pos = 0)
+    g <- gtable_add_grob(g, txt, 1, 1, 1, length(g$widths))
+  }
+  
   class(g) <- c("ggarrange", class(g))
   g
 }

@@ -16,6 +16,7 @@
 #' @param heights relative heights of each row, or unit object.
 #' @param respect not implemented. see ?layout.
 #' @param layout gglayout object.
+#' @param main main title of the plot.
 #' @return ggtable object that inherits gtable class.
 #' @seealso \code{\link{gglayout}} for methods generating flexible layout. \code{\link{ggarrange}} for simple arrangement.
 #' @export
@@ -70,7 +71,7 @@
 #' gt2 <- ggtable(p[[3]], p[[5]], p[[7]], nrow = 1)
 #' ggarrange(gt1, gt2, p[[4]], ncol = 1)
 ggtable <- function(..., plots = NULL, dim = NULL, nrow = dim[1], ncol = dim[2], byrow = TRUE, widths = NULL, heights = NULL, respect = FALSE,
-                    layout = NULL) {
+                    layout = NULL, main = NULL) {
   
   # detect plots
   if (is.null(plots)) plots <- list(...)
@@ -142,6 +143,14 @@ ggtable <- function(..., plots = NULL, dim = NULL, nrow = dim[1], ncol = dim[2],
 
   # r/c-bind matix of gtable
   ret_gtable <- Reduce(function(x, y) rbind.gtable(x, y, width = "max"), apply(mat, 1, function(m) Reduce(function(x, y) cbind.gtable(x, y, height = "max"), m)))
+
+  # add main title
+  if (!is.null(main)) {
+    txt <- textGrob(main)
+    ret_gtable <- gtable_add_rows(ret_gtable, grobHeight(txt) * 2, pos = 0)
+    ret_gtable <- gtable_add_grob(ret_gtable, txt, 1, 1, 1, length(ret_gtable$widths))
+  }
+
   class(ret_gtable) <- c("ggtable", "gtable")
   ret_gtable
 }
