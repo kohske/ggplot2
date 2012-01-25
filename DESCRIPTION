@@ -201,5 +201,9 @@ Collate:
     'gglayout.r'
     'ggtable.r'
     'annotation-custom.r'
-    'as.grob.r'
-
+    'aes-group-order.r'
+    'aes-position.r'
+    'translate-qplot-base.r'
+    'translate-qplot-ggplot.r'
+    'translate-qplot-gpl.r'
+    'translate-qplot-lattice.r'
