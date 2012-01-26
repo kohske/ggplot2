@@ -51,3 +51,12 @@ breaks <- function(x, equal, nbins = NULL, binwidth = NULL) {
   
 }
 
+#' Cut numeric vector into intervals of equal length.
+#' 
+#' @param x numeric vector
+auto_break_trans <- function(n = 5) {
+  structure(
+    function(trans, inv) trans_breaks(trans, inv, n),
+    class = "auto_break"
+  )
+}

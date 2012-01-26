@@ -45,6 +45,12 @@ continuous_scale <- function(aesthetics, scale_name, palette, name = NULL, break
   if (!is.null(limits)) {
     limits <- trans$trans(limits)
   }
+
+  if (is.null(breaks)) {
+    breaks <- trans$breaks
+  } else if (inherits(breaks, "auto_break")) {
+    breaks <- breaks(trans$trans, trans$inv)
+  }
   
   structure(list(
     call = match.call(), 
