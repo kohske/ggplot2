@@ -144,6 +144,13 @@ ggtable <- function(..., plots = NULL, dim = NULL, nrow = dim[1], ncol = dim[2],
   # r/c-bind matix of gtable
   ret_gtable <- Reduce(function(x, y) rbind.gtable(x, y, width = "max"), apply(mat, 1, function(m) Reduce(function(x, y) cbind.gtable(x, y, height = "max"), m)))
 
+  # relative width/height of panel
+  # TODO: not elegant...
+  px <- unique(subset(ret_gtable$layout, name == "panel")$l)
+  py <- unique(subset(ret_gtable$layout, name == "panel")$t)
+  for (i in seq(px)) ret_gtable$widths[[px[i]]] <- layout$widths[i]
+  for (i in seq(py)) ret_gtable$heights[[py[i]]] <- layout$heights[i]
+
   # add main title
   if (!is.null(main)) {
     txt <- textGrob(main)
