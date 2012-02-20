@@ -158,6 +158,7 @@ ggplot_gtable <- function(data) {
     plot_table <- gtable_add_grob(gtable(widths = 1, heights = 1), g, 1, 1, 1, 1)
   }
 
+  # TODO: use z-ordering of gtable 
   if (inherits(theme$plot.background, "theme")) {
     plot_table <- gtable_add_grob(plot_table, theme_render(theme, "plot.background", vp = "background"),
                                   t = 1, l = 1, b = length(plot_table$heights), r = length(plot_table$widths))
