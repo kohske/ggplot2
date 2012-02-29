@@ -50,18 +50,20 @@
 #' qplot(reorder(manufacturer, cty), cty, data=mpg) +  
 #'   scale_x_discrete(labels = abbreviate)
 #' }
-scale_x_discrete <- function(..., expand = c(0, 0.6)) {
+scale_x_discrete <- function(..., expand = c(0, 0.6), guide = guide_axis(position = "bottom")) {
+  if (inherits(guide, "pguide")) guide <- list(guide)
   sc <- discrete_scale(c("x", "xmin", "xmax", "xend"), "position_d", identity, ..., 
-    expand = expand, guide = "none")
+    expand = expand, guide = guide)
     
   sc$range_c <- ContinuousRange$new()
   sc
 }
 #' @rdname scale_discrete
 #' @export
-scale_y_discrete <- function(..., expand = c(0, 0.6)) {
+scale_y_discrete <- function(..., expand = c(0, 0.6), guide = guide_axis(position = "left")) {
+  if (inherits(guide, "pguide")) guide <- list(guide)
   sc <- discrete_scale(c("y", "ymin", "ymax", "yend"), "position_d", identity, ..., 
-    expand = expand, guide = "none")
+    expand = expand, guide = guide)
   sc$range_c <- ContinuousRange$new()
   sc  
 }

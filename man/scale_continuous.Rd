@@ -9,9 +9,11 @@
 \alias{scale_y_sqrt}
 \title{Continuous position scales (x & y).}
 \usage{
-  scale_x_continuous(..., expand = c(0.05, 0))
+  scale_x_continuous(..., expand = c(0.05, 0),
+    guide = guide_axis())
 
-  scale_y_continuous(..., expand = c(0.05, 0))
+  scale_y_continuous(..., expand = c(0.05, 0),
+    guide = guide_axis())
 
   scale_x_log10(...)
 

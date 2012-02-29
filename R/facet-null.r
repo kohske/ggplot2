@@ -46,22 +46,42 @@ facet_render.null <- function(facet, panel, coord, theme, geom_grobs) {
   panel_grobs <- c(list(bg), geom_grobs, list(fg))
   
   panel_grob <- gTree(children = do.call("gList", panel_grobs))  
-  axis_h <- coord_render_axis_h(coord, range, theme)
-  axis_v <- coord_render_axis_v(coord, range, theme)
+
+  # generate grobs of positional guide
+  guides <- pguides_gengrob(c(panel$x_scales[1], panel$y_scales[1]), range, coord, theme)
+
+  # calculate placement of each guide
+  guides <- llply(guides,
+                  function(guide) {
+                    attr(guide, "place") <- switch(attr(guide, "position"),
+                                                top = c(2, 1), bottom = c(2, 3), left = c(1, 2), right = c(3, 2), float = c(2, 2))
+                    guide
+                  })
+
+  # maxz returns zero if no guides is drawn
+  zero <- unit(0, "null")
+  maxz <- function(x = list()) if (length(x) == 0) zero else do.call("max", x)
+
+  # calculate widths/heights by guides size
+  topHeight    <- maxz(llply(Filter(function(guide)attr(guide, "place")[2] == 1, guides), grobHeight))
+  bottomHeight <- maxz(llply(Filter(function(guide)attr(guide, "place")[2] == 3, guides), grobHeight))
+  leftWidth    <- maxz(llply(Filter(function(guide)attr(guide, "place")[1] == 1, guides), grobWidth))
+  rightWidth   <- maxz(llply(Filter(function(guide)attr(guide, "place")[1] == 3, guides), grobWidth))
+
+  # w/h of gtable
+  widths <- unit.c(leftWidth, unit(1, "null"), rightWidth)
+  heights <- unit.c(topHeight, unit(1, "null"), bottomHeight)
+
+  # create gtable
+  gt <- gtable(widths = widths, heights = heights, respect = respect)
   
-  all <- matrix(list(
-    axis_v,     panel_grob,
-    zeroGrob(), axis_h
-  ), ncol = 2, byrow = TRUE)
+  # panel
+  gt <- gtable_add_grob(gt, list(panel_grob), 2, 2, 2, 2, clip = "on", name = "panel")
+  for (guide in guides) {
+    gt <- gtable_add_grob(gt, list(guide), attr(guide, "place")[2], attr(guide, "place")[1], clip = "off", name = guide$name)
+  }
   
-  layout <- layout_matrix("layout", all, 
-    widths = unit.c(grobWidth(axis_v), unit(1, "null")),
-    heights = unit.c(unit(aspect_ratio, "null"), grobHeight(axis_h)),
-    respect = respect, clip = c("off", "off", "on", "off")
-  )
-  layout$layout$name <- c("axis-l", "spacer", "panel", "axis-b")
-  
-  layout
+  gt
 }
   
 icon.facet_null <- function(.) {

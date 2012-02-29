@@ -3,9 +3,11 @@
 \alias{scale_y_discrete}
 \title{Discrete position.}
 \usage{
-  scale_x_discrete(..., expand = c(0, 0.6))
+  scale_x_discrete(..., expand = c(0, 0.6),
+    guide = guide_axis(position = "bottom"))
 
-  scale_y_discrete(..., expand = c(0, 0.6))
+  scale_y_discrete(..., expand = c(0, 0.6),
+    guide = guide_axis(position = "left"))
 }
 \arguments{
   \item{...}{common discrete scale parameters: \code{name},
