@@ -11,6 +11,11 @@
 #' With histodot binning, the bins have fixed positions and fixed widths, much
 #' like a histogram.
 #'
+#' When binning along the x axis and stacking along the y axis, the numbers on
+#' y axis are not meaningful, due to technical limitations of ggplot2. You can
+#' hide the y axis, as in one of the examples, or manually scale it
+#' to match the number of dots.
+#'
 #' @inheritParams geom_point
 #' @param binaxis which axis to bin along "x" (default) or "y"
 #' @param method "dotdensity" (default) for dot-density binning, or
@@ -101,6 +106,10 @@ GeomDotplot <- proto(Geom, {
     }
 
     params <- list(...)
+    # American names must be changed here so that they'll go to geom_params;
+    # otherwise they'll end up in stat_params
+    params <- rename_aes(params)
+
     geom_params <- match.params(.$parameters(), params)
     stat_params <- match.params(stat$parameters(), params)
     stat_params <- stat_params[setdiff(names(stat_params), names(geom_params))]

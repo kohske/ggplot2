@@ -20,7 +20,7 @@
 #'   to other options.
 #' @param as.table If \code{TRUE}, the default, the facets are laid out like
 #'   a table with highest values at the bottom-right. If \code{FALSE}, the 
-#'   facet are laid out like a plot with the highest value at the top-right.
+#'   facets are laid out like a plot with the highest value at the top-right.
 #' @param shrink If \code{TRUE}, will shrink scales to fit output of
 #'   statistics, not raw data. If \code{FALSE}, will be range of raw data
 #'   before statistical summary.
@@ -150,9 +150,12 @@ facet_grid <- function(facets, margins = FALSE, scales = "fixed", space = "fixed
     facets <- as.formula(facets)
   }
   if (is.formula(facets)) {
-    rows <- as.quoted(facets[[2]])
+    lhs <- function(x) if(length(x) == 2) NULL else x[-3]
+    rhs <- function(x) if(length(x) == 2) x else x[-2]
+    
+    rows <- as.quoted(lhs(facets))
     rows <- rows[!sapply(rows, identical, as.name("."))]
-    cols <- as.quoted(facets[[3]])
+    cols <- as.quoted(rhs(facets))
     cols <- cols[!sapply(cols, identical, as.name("."))]
   }
   if (is.list(facets)) {
@@ -170,6 +173,7 @@ facet_grid <- function(facets, margins = FALSE, scales = "fixed", space = "fixed
     subclass = "grid"
   )
 }
+
 
 #' @S3method facet_train_layout grid
 facet_train_layout.grid <- function(facet, data) { 

@@ -2,7 +2,7 @@
 #'
 #' The Cartesian coordinate system is the most familiar, and common, type of
 #' coordinate system. Setting limits on the coordinate system will zoom the
-#' plot (like you're looking at it with a magnifying class), and will not
+#' plot (like you're looking at it with a magnifying glass), and will not
 #' change the underlying data like setting limits on a scale will.
 #' 
 #' @param xlim limits for the x axis
@@ -58,7 +58,7 @@ coord_transform.cartesian <- function(., data, details) {
   rescale_y <- function(data) rescale(data, from = details$y.range)
   
   data <- transform_position(data, rescale_x, rescale_y)
-  transform_position(data, trim_infinite_01, trim_infinite_01)
+  transform_position(data, squish_infinite, squish_infinite)
 }
 
 #' @S3method coord_train cartesian
