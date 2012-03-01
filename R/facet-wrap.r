@@ -52,7 +52,7 @@
 #' p + geom_point(data = transform(cyl6, cyl = NULL), colour = "red") + 
 #'   facet_wrap(~ cyl)
 #' }
-facet_wrap <- function(facets, nrow = NULL, ncol = NULL, scales = "fixed", shrink = TRUE, as.table = TRUE, drop = TRUE) {
+facet_wrap <- function(facets, nrow = NULL, ncol = NULL, scales = "fixed", shrink = TRUE, as.table = TRUE, drop = TRUE, strip = "top") {
   scales <- match.arg(scales, c("fixed", "free_x", "free_y", "free"))
   free <- list(
     x = any(scales %in% c("free_x", "free")),
@@ -62,7 +62,7 @@ facet_wrap <- function(facets, nrow = NULL, ncol = NULL, scales = "fixed", shrin
   facet(
     facets = as.quoted(facets), free = free, shrink = shrink,
     as.table = as.table, drop = drop,
-    ncol = ncol, nrow = nrow, 
+    ncol = ncol, nrow = nrow, strip = strip,
     subclass = "wrap"
   )
 }
@@ -178,8 +178,10 @@ facet_render.wrap <- function(facet, panel, coord, theme, geom_grobs) {
     loc <- find_pos(p, "panel")
     gt <- gtable_add_grob(gt, list(panels[[p]]), loc[2], loc[1], clip = "on", name = panels[[p]]$name)
 
-    loc <- find_pos(p, "N")
-    gt <- gtable_add_grob(gt, list(strips$t[[p]]), loc[2], loc[1], clip = "on", name = panels[[p]]$name)
+    if (!is.null(facet$strip)) {
+      loc <- find_pos(p, switch(facet$strip, top = "N", left = "W", bottom = "S", right = "E"))
+      gt <- gtable_add_grob(gt, list(strips$t[[p]]), loc[2], loc[1], clip = "on", name = panels[[p]]$name)
+    }
     
     ax <- axes[[p]]
     for (pos in names(ax)) {
