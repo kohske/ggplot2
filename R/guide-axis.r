@@ -93,7 +93,7 @@ pguide_gengrob.axis.cartesian <- function(pguide, ginfo, scale, coord, theme) {
   # Fix for oob bug changed so that at = numeric(0) if there is no breaks.
   # Temporally, at is set as NA if there is no breaks.
   # see also SHA: f332070fca77399a84ea7a116e8c63f6990abaf6, SHA: 2ae13ad0a856c24cab6a69b523da0936ef7a94d8
-  if (is.null(def$at) || length(def$at) == 0) return(zeroGrob())
+  if (is.null(def$at) || length(def$at) == 0) return(NULL)
   
   axis_linear_render(pguide$title, def, position, theme)  
 }
@@ -117,7 +117,7 @@ pguide_gengrob.axis.flip <- function(pguide, ginfo, scale, coord, theme) {
   # Fix for oob bug changed so that at = numeric(0) if there is no breaks.
   # Temporally, at is set as NA if there is no breaks.
   # see also SHA: f332070fca77399a84ea7a116e8c63f6990abaf6, SHA: 2ae13ad0a856c24cab6a69b523da0936ef7a94d8
-  if (is.null(def$at) || length(def$at) == 0) return(zeroGrob())
+  if (is.null(def$at) || length(def$at) == 0) return(NULL)
   
   # position of this guide
   if (is.null(pguide$position)) {
@@ -150,7 +150,7 @@ pguide_gengrob.axis.polar <- function(pguide, ginfo, scale, coord, theme) {
     def$at <- rescale(def$at, c(0, 0.4)) + 0.5
     def$minor <- rescale(def$minor, c(0, 0.4)) + 0.5
     
-    if (is.null(def$at) || length(def$at) == 0) return(zeroGrob())
+    if (is.null(def$at) || length(def$at) == 0) return(NULL)
     
     # position of this guide
     if (is.null(pguide$position)) {
@@ -231,8 +231,13 @@ axis_linear_train <- function(pguide, range, scale) {
   }
 
   # breaks in other space
-  or_breaks <- inv_fun(tr_breaks)
-  co_breaks <- censor(rescale(or_breaks, from = or_limits))
+  if (is.null(tr_breaks)) {
+    or_breaks <- NULL
+    co_breaks <- NULL
+  } else {
+    or_breaks <- inv_fun(tr_breaks)
+    co_breaks <- censor(rescale(or_breaks, from = or_limits))
+  }
 
   # minor breaks
   #
@@ -257,11 +262,18 @@ axis_linear_train <- function(pguide, range, scale) {
   }
 
   # minor breaks in other space
-  or_minor <- inv_fun(tr_minor)
-  co_minor <- censor(rescale(or_minor, from = or_limits))
+  if (is.null(tr_minor)) {
+    or_minor <- NULL
+    co_minor <- NULL
+  } else {
+    or_minor <- inv_fun(tr_minor)
+    co_minor <- censor(rescale(or_minor, from = or_limits))
+  }
 
   # label of major breaks
-  if (is.function(pguide$label)) {
+  if (is.null(tr_breaks)) {
+    labels <- NULL
+  } else if (is.function(pguide$label)) {
     labels <- pguide$labels(tr_breaks)
   } else if (is.waive(pguide$label)) {
     labels <- as.character(tr_breaks)
@@ -272,7 +284,6 @@ axis_linear_train <- function(pguide, range, scale) {
   } else {
     stop()
   }
-
   list(at = co_breaks, minor = co_minor, labels = labels)
 }
 
