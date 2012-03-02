@@ -160,7 +160,8 @@ facet_render.wrap <- function(facet, panel, coord, theme, geom_grobs) {
   
   # create gtable
   gt <- gtable(widths = rep(unit(1/gt_dim[2], "null"), gt_dim[2]),
-               heights = rep(unit(1/gt_dim[1], "null"), gt_dim[1]))
+               heights = rep(unit(1/gt_dim[1], "null"), gt_dim[1]),
+               respect = respect)
 
   # place grobs on gtable
   for (p in seq_along(panels)) {
@@ -239,6 +240,8 @@ facet_axes.wrap <- function(facet, panel, coord, theme) {
                    function(i) llply(panel$x_scales[[i]]$guide, pguide_gengrob, panel$ranges[[i]], panel$x_scales[[i]], coord, theme)),
                  y = llply(unique(panel$layout$SCALE_Y),
                    function(i) llply(panel$y_scales[[i]]$guide, pguide_gengrob, panel$ranges[[i]], panel$y_scales[[i]], coord, theme)))
+  guides$x <- llply(guides$x, Filter, f = Negate(is.null))
+  guides$y <- llply(guides$y, Filter, f = Negate(is.null))
   guides
 }
 
