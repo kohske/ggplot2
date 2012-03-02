@@ -27,6 +27,7 @@
 #' @param drop If \code{TRUE}, the default, all factor levels not used in the
 #'   data will automatically be dropped. If \code{FALSE}, all factor levels
 #'   will be shown, regardless of whether or not they appear in the data.
+#' @param strip position of the strip (tblr) or NULL for no strip.
 #' @export
 #' @examples 
 #' \donttest{
@@ -131,7 +132,7 @@
 #' p + facet_grid(. ~ vs, labeller = label_bquote(alpha ^ .(x)))
 #' p + facet_grid(. ~ vs, labeller = label_bquote(.(x) ^ .(x))) 
 #' }
-facet_grid <- function(facets, margins = FALSE, scales = "fixed", space = "fixed", shrink = TRUE, labeller = "label_value", as.table = TRUE, drop = TRUE) {
+facet_grid <- function(facets, margins = FALSE, scales = "fixed", space = "fixed", shrink = TRUE, labeller = "label_value", as.table = TRUE, drop = TRUE, strip = "tr") {
   scales <- match.arg(scales, c("fixed", "free_x", "free_y", "free"))
   free <- list(
     x = any(scales %in% c("free_x", "free")),
@@ -165,15 +166,36 @@ facet_grid <- function(facets, margins = FALSE, scales = "fixed", space = "fixed
   if (length(rows) + length(cols) == 0) {
     stop("Must specify at least one variable to facet by", call. = FALSE)
   }
+
+  # position of strip
+  strip_h <- str_extract_all(strip, "[tb]")[[1]]
+  if (length(strip_h) == 0) {
+    strip_h <- "null"
+  } else if (length(strip_h) > 1) {
+    stop("Invalid strip:", strip, "in facet_grid.")
+  } else {
+    strip_h <- switch(strip_h, t = "top", b = "bottom", "top")
+  }
+  
+  strip_v <- str_extract_all(strip, "[lr]")[[1]]
+  if (length(strip_v) == 0) {
+    strip_v <- "null"
+  } else if (length(strip_v) > 1) {
+    stop("Invalid strip:", strip, "in facet_grid.")
+  } else {
+    strip_v <- switch(strip_v, l = "left", r = "right", "right")
+  }
+  
+  strip <- list(h = strip_h, v = strip_v)
   
   facet(
     rows = rows, cols = cols, margins = margins, shrink = shrink,
     free = free, space_free = space_free, 
     labeller = labeller, as.table = as.table, drop = drop,
+    strip = strip,
     subclass = "grid"
   )
 }
-
 
 #' @S3method facet_train_layout grid
 facet_train_layout.grid <- function(facet, data) { 
@@ -195,119 +217,47 @@ facet_map_layout.grid <- function(facet, data, layout) {
 
 #' @S3method facet_render grid
 facet_render.grid <- function(facet, panel, coord, theme, geom_grobs) {
-  axes <- facet_axes(facet, panel, coord, theme)
-  strips <- facet_strips(facet, panel, theme)
-  panels <- facet_panels(facet, panel, coord, theme, geom_grobs)
+  nrow <- max(panel$layout$ROW)
+  ncol <- max(panel$layout$COL)
+  n <- nrow(panel$layout$COL)
 
-  # adjust the size of axes to the size of panel
-  axes$l$heights <- panels$heights
-  axes$b$widths <- panels$widths
-  
-  # adjust the size of the strips to the size of the panels
-  strips$r$heights <- panels$heights
-  strips$t$widths <- panels$widths
-  
-  # Combine components into complete plot
-  top <- strips$t
-  top <- gtable_add_cols(top, strips$r$widths)
-  top <- gtable_add_cols(top, axes$l$widths, pos = 0)
-  
-  center <- cbind(cbind(axes$l, panels), strips$r)
-  bottom <- axes$b
-  bottom <- gtable_add_cols(bottom, strips$r$widths)
-  bottom <- gtable_add_cols(bottom, axes$l$widths, pos = 0)
-
-  complete <- rbind(top, rbind(center, bottom))
-  complete$respect <- panels$respect
-  complete$name <- "layout"
-  
-  complete
-}
-
-#' @S3method facet_strips grid
-facet_strips.grid <- function(facet, panel, theme) {
-  col_vars <- unique(panel$layout[names(facet$cols)])
-  row_vars <- unique(panel$layout[names(facet$rows)])
-
-  list(
-    r = build_strip(panel, row_vars, facet$labeller, theme, "r"),
-    t = build_strip(panel, col_vars, facet$labeller, theme, "t")
-  )
-}
-
-build_strip <- function(panel, label_df, labeller, theme, side = "right") {
-  side <- match.arg(side, c("top", "left", "bottom", "right"))
-  horizontal <- side %in% c("top", "bottom")
-  labeller <- match.fun(labeller)
-  
-  # No labelling data, so return empty row/col
-  if (empty(label_df)) {
-    if (horizontal) {
-      widths <- unit(rep(0, max(panel$layout$COL)), "null")
-      return(layout_empty_row(widths))
-    } else {
-      heights <- unit(rep(0, max(panel$layout$ROW)), "null")
-      return(layout_empty_col(heights))
-    }
-  }
-  
-  # Create matrix of labels
-  labels <- matrix(list(), nrow = nrow(label_df), ncol = ncol(label_df))
-  for (i in seq_len(ncol(label_df))) {
-    labels[, i] <- labeller(names(label_df)[i], label_df[, i])
-  }
-  
-  # Render as grobs
-  grobs <- aaply(labels, c(1,2), ggstrip, theme = theme, 
-    horizontal = horizontal, .drop = FALSE)
-  
-  # Create layout
-  name <- paste("strip", side, sep = "-")
-  if (horizontal) {
-    grobs <- t(grobs)
+  # information for building panel table
+  gtinfo <- within(list(), {
     
-    # Each row is as high as the highest and as a wide as the panel
-    row_height <- function(row) max(laply(row, height_cm))
-    heights <- unit(apply(grobs, 1, row_height), "cm")
-    widths <- unit(rep(1, ncol(grobs)), "null")
-  } else {
-    # Each row is wide as the widest and as high as the panel
-    col_width <- function(col) max(laply(col, width_cm))
-    widths <- unit(apply(grobs, 2, col_width), "cm")
-    heights <- unit(rep(1, nrow(grobs)), "null")
-  }
-  strips <- layout_matrix(name, grobs, heights = heights, widths = widths)
+    # number of strips
+    nstripH <- length(facet$cols)
+    nstripV <- length(facet$rows)
+    
+    # dimension of gtable
+    dim <- c(nrow * 2 + 2 + nstripH, ncol * 2 + 2 + nstripV)
+
+    # offset of panel region
+    poffset_row <- 1 + switch(facet$strip$h, top = nstripH, bottom = 0, 0) + 1
+    poffset_col <- 1 + switch(facet$strip$v, left = nstripV, top = 0, 0) + 1
+
+    # row/col indices of panels, margins, guides, and strips
+    panels <- list(r = (seq(nrow) - 1) * 2 + poffset_row,
+                   c = (seq(ncol) - 1) * 2 + poffset_col)
+    margins <- list(r = (seq(nrow - 1) - 1) * 2 + poffset_row + 1,
+                    c = (seq(ncol - 1) - 1) * 2 + poffset_col + 1)
+    guides <- list(r = c(1, dim[1]), c = c(1, dim[2]))
+    strips <- list(r = switch(facet$strip$h, null = NULL, top = 1 + seq(nstripH), bottom = dim[1] - seq(nstripH)),
+                   c = switch(facet$strip$v, null = NULL, left = 1 + seq(nstripV), right = dim[2] - seq(nstripV)))
+  })
+
+  table <- gtable(widths = seq_len(gtinfo$dim[2]), heights = seq_len(gtinfo$dim[1]))
+  attr(table, "gtinfo") <- gtinfo
+
+  table <- facet_axes(facet, table, panel, coord, theme)
+  table <- facet_strips(facet, table, panel, theme)
+  table <- facet_panels(facet, table, panel, coord, theme, geom_grobs)
   
-  if (horizontal) {
-    gtable_add_col_space(strips, theme$panel.margin)
-  } else {
-    gtable_add_row_space(strips, theme$panel.margin)
-  }
-}
+  # sizes
+  
+  heights <- rep(list(unit(0, "mm")), gtinfo$dim[1])
+  widths <- rep(list(unit(0, "mm")), gtinfo$dim[2])
 
-#' @S3method facet_axes grid
-facet_axes.grid <- function(facet, panel, coord, theme) {
-  axes <- list()
-
-  # Horizontal axes
-  cols <- which(panel$layout$ROW == 1)
-  grobs <- lapply(panel$ranges[cols], coord_render_axis_h, 
-    coord = coord, theme = theme)
-  axes$b <- gtable_add_col_space(layout_row("axis-b", grobs),
-    theme$panel.margin)
-
-  # Vertical axes
-  rows <- which(panel$layout$COL == 1)
-  grobs <- lapply(panel$ranges[rows], coord_render_axis_v, 
-    coord = coord, theme = theme)
-  axes$l <- gtable_add_row_space(layout_col("axis-l", grobs),
-    theme$panel.margin)
-
-  axes
-}
-
-#' @S3method facet_panels grid
-facet_panels.grid <- function(facet, panel, coord, theme, geom_grobs) {
+  # panel
   
   # If user hasn't set aspect ratio, and we have fixed scales, then
   # ask the coordinate system if it wants to specify one
@@ -321,45 +271,158 @@ facet_panels.grid <- function(facet, panel, coord, theme, geom_grobs) {
   } else {
     respect <- TRUE
   }
+
+  size <- function(x) unit(diff(scale_dimension(x)), "null")
+  
+  if (facet$space_free$x) {
+    x_scales <- panel$layout$SCALE_X[panel$layout$ROW == 1]
+    panel_widths <- llply(panel$x_scales, size)[x_scales]
+  } else {
+    panel_widths <- rep(list(unit(1, "null")), ncol)
+  }
+  if (facet$space_free$y) {
+    y_scales <- panel$layout$SCALE_Y[panel$layout$COL == 1]
+    panel_heights <- llply(panel$y_scales, size)[y_scales]
+  } else {
+    panel_heights <- rep(list(unit(1 * aspect_ratio, "null")), nrow)
+  }
+
+  heights[gtinfo$panels$r] <- panel_heights
+  widths[gtinfo$panels$c] <- panel_widths
+  
+  # margin b/w panel
+  heights[gtinfo$margins$r] <- list(theme$panel.margin)
+  widths[gtinfo$margins$c] <- list(theme$panel.margin)
+
+  zmax <- function(x) do.call("max", c(list(unit(0, "mm")), x))
+  
+  # strips
+  widths[gtinfo$strips$c] <- llply(gtinfo$strips$c, function(i) zmax(llply(table$grobs[which(table$layout$l == i)], grobWidth)))
+  heights[gtinfo$strips$r] <- llply(gtinfo$strips$r, function(i) zmax(llply(table$grobs[which(table$layout$t == i)], grobHeight)))
+
+  # guides
+  widths[gtinfo$guides$c] <-
+    llply(gtinfo$guides$c,
+          function(i) zmax(llply(table$grobs[which(table$layout$l == i)], grobWidth)))
+  heights[gtinfo$guides$r] <-
+    llply(gtinfo$guides$r,
+          function(i) zmax(llply(table$grobs[which(table$layout$t == i)], grobHeight)))
+
+  table$widths <- do.call("unit.c", widths)
+  table$heights <- do.call("unit.c", heights)
+  
+  table$respect <- respect
+  table$name <- "layout"
+
+  attr(table, "gtinfo") <- NULL
+  table
+}
+
+#' @S3method facet_strips grid
+facet_strips.grid <- function(facet, table, panel, theme) {
+  pl <- panel$layout
+  labeller <- match.fun(facet$labeller)
+  
+  if (facet$strip$h != "null") {
+    colvars <- subset(panel$layout,
+                      ROW == switch (facet$strip$h, top = 1, bottom = max(pl$ROW)),
+                      select = c(names(facet$cols), "PANEL"))
+    for (i in seq_along(facet$col)) {
+      for (j in seq_len(nrow(colvars))) {
+        label <- labeller(names(colvars)[i], colvars[j, i])
+        grob <- ggstrip(label, TRUE, theme)
+        loc <- facet_position_grob_grid(attr(table, "gtinfo"), pl, "strip", as.numeric(colvars[j, ]$PANEL), facet$strip$h, i)
+        table <- gtable_add_grob(table, list(grob), loc[1], loc[2], clip = "off", name = grob$name)      
+      }
+    }
+  }
+
+  if (facet$strip$v != "null") {
+    rowvars <- subset(panel$layout,
+                      COL == switch (facet$strip$v, left = 1, right = max(pl$COL)),
+                      select = c(names(facet$rows), "PANEL"))
+    for (i in seq_along(facet$row)) {
+      for (j in seq_len(nrow(rowvars))) {
+        label <- labeller(names(rowvars)[i], rowvars[j, i])
+        grob <- ggstrip(label, TRUE, theme)
+        loc <- facet_position_grob_grid(attr(table, "gtinfo"), pl, "strip", as.numeric(rowvars[j, ]$PANEL), facet$strip$v, i)
+        table <- gtable_add_grob(table, list(grob), loc[1], loc[2], clip = "off", name = grob$name)      
+      }
+    }
+  }
+  
+  table
+}
+
+#' @S3method facet_axes grid
+facet_axes.grid <- function(facet, table, panel, coord, theme) {
+  place <- list(h = switch(facet$strip$h, top = "bottom", bottom = "top", NULL),
+                v = switch(facet$strip$v, left = "right", right = "left", NULL))
+  guides <- list(x = llply(unique(panel$layout$SCALE_X),
+                   function(i) llply(panel$x_scales[[i]]$guide, pguide_gengrob,
+                                     panel$ranges[[subset(panel$layout, SCALE_X == i)$PANEL[1]]],
+                                     panel$x_scales[[i]], coord, theme, place$h)),
+                 y = llply(unique(panel$layout$SCALE_Y),
+                   function(i) llply(panel$y_scales[[i]]$guide, pguide_gengrob,
+                                     panel$ranges[[subset(panel$layout, SCALE_Y == i)$PANEL[1]]],
+                                     panel$y_scales[[i]], coord, theme, place$v)))
+
+  guides$x <- llply(guides$x, Filter, f = Negate(is.null))
+  guides$y <- llply(guides$y, Filter, f = Negate(is.null))
+
+  pl <- panel$layout
+
+  for (pi in seq_along(guides$x)) {
+    for (gi in seq_along(guides$x[[pi]])) {
+      pos <- attr(guides$x[[pi]][[gi]], "position")
+      plp <- subset(pl, SCALE_X == pi)
+      ps <- switch(pos,
+                   top = subset(plp, ROW == 1)$PANEL,
+                   bottom = subset(plp, ROW == max(ROW))$PANEL,
+                   float = 1)
+      for (p in as.numeric(ps)) {
+        loc <- facet_position_grob_grid(attr(table, "gtinfo"), pl, "guide", p, pos)
+        table <- gtable_add_grob(table, list(guides$x[[pi]][[gi]]), loc[1], loc[2], clip = "off", name = guides$x[[pi]][[gi]]$name)
+      }
+    }
+  }
+  
+  for (pi in seq_along(guides$y)) {
+    for (gi in seq_along(guides$y[[pi]])) {
+      pos <- attr(guides$y[[pi]][[gi]], "position")
+      plp <- subset(pl, SCALE_Y == pi)
+      ps <- switch(pos,
+                   left = subset(plp, COL == 1)$PANEL,
+                   right = subset(plp, COL == max(ROW))$PANEL,
+                   float = 1)
+      for (p in as.numeric(ps)) {
+        loc <- facet_position_grob_grid(attr(table, "gtinfo"), pl, "guide", p, pos)
+        table <- gtable_add_grob(table, list(guides$y[[pi]][[gi]]), loc[1], loc[2], clip = "off", name = guides$y[[pi]][[gi]]$name)
+      }
+    }
+  }
+  table
+}
+
+#' @S3method facet_panels grid
+facet_panels.grid <- function(facet, table, panel, coord, theme, geom_grobs) {
   
   # Add background and foreground to panels
   panels <- panel$layout$PANEL    
   ncol <- max(panel$layout$COL)
   nrow <- max(panel$layout$ROW)
-  
-  panel_grobs <- lapply(panels, function(i) {
+
+  for (i in as.numeric(panels)) {
     fg <- coord_render_fg(coord, panel$range[[i]], theme)
     bg <- coord_render_bg(coord, panel$range[[i]], theme)
     
-    geom_grobs <- lapply(geom_grobs, "[[", i)
-    panel_grobs <- c(list(bg), geom_grobs, list(fg))
-    
-    gTree(children = do.call("gList", panel_grobs))  
-  })
-  
-  panel_matrix <- matrix(panel_grobs, nrow = nrow, ncol = ncol, byrow = TRUE)
-  
-  size <- function(x) unit(diff(scale_dimension(x)), "null")
-  
-  if (facet$space_free$x) {
-    x_scales <- panel$layout$SCALE_X[panel$layout$ROW == 1]
-    panel_widths <- do.call("unit.c", llply(panel$x_scales, size))[x_scales]
-  } else {
-    panel_widths <- rep(unit(1, "null"), ncol)
+    geoms <- lapply(geom_grobs, "[[", i)
+    panel_grobs <- c(list(bg), geoms, list(fg))
+    grob <- gTree(children = do.call("gList", panel_grobs))  
+    loc <- facet_position_grob_grid(attr(table, "gtinfo"), panel$layout, "panel", i)
+    table <- gtable_add_grob(table, list(grob), loc[1], loc[2], clip = "on", name = paste("panel", grob$name, sep = ""))
   }
-  if (facet$space_free$y) {
-    y_scales <- panel$layout$SCALE_Y[panel$layout$COL == 1]
-    panel_heights <- do.call("unit.c", llply(panel$y_scales, size))[y_scales]
-  } else {
-    panel_heights <- rep(unit(1 * aspect_ratio, "null"), nrow)
-  }
-  
-  panels <- layout_matrix("panel", panel_matrix,
-    panel_widths, panel_heights, respect = respect)
-  panels <- gtable_add_col_space(panels, theme$panel.margin)
-  panels <- gtable_add_row_space(panels, theme$panel.margin)
-    
-  panels
+  table
 }
 
 icon.grid <- function(.) {
@@ -375,3 +438,33 @@ facet_vars.grid <- function(facet) {
   paste(lapply(list(facet$rows, facet$cols), paste, collapse = ", "), 
     collapse = " ~ ")
 }
+
+#' @keywords internal
+#
+# type: panel, float, strip, or guide.
+# p: index of panel
+# pos: position of the grob
+# offset: used for multi-row/column strip
+facet_position_grob_grid <- function(gtinfo, layout, type, p, pos = NULL, offset = 1) {
+
+  panr <- subset(layout, PANEL == p)$ROW
+  panc <- subset(layout, PANEL == p)$COL
+
+  # location of panel in gtable
+  pr <- (panr - 1) * 2 + gtinfo$poffset_row
+  pc <- (panc - 1) * 2 + gtinfo$poffset_col
+
+  switch (type,
+          panel =, float = c(pr, pc),
+          strip = switch(pos,
+            top = c(2 + (offset - 1), pc),
+            left = c(pr, 2 + (offset - 1)),
+            bottom = c(gtinfo$dim[1] - 1 - (offset - 1), pc),
+            right = c(pr, gtinfo$dim[2] - 1 - (offset - 1))),
+          guide = switch(pos,
+            top = c(1, pc),
+            left = c(pr, 1),
+            bottom = c(gtinfo$dim[1], pc),
+            right = c(pr, gtinfo$dim[2])))
+}
+

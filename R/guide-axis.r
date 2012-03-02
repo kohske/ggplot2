@@ -66,7 +66,7 @@ guide_axis <- function(
 }
 
 #' @S3method pguide_gengrob.axis cartesian
-pguide_gengrob.axis.cartesian <- function(pguide, ginfo, scale, coord, theme) {
+pguide_gengrob.axis.cartesian <- function(pguide, ginfo, scale, coord, theme, place = NULL) {
   
   # aes of this axis
   if ("x" %in% scale$aesthetics)     type <- "h"
@@ -81,9 +81,11 @@ pguide_gengrob.axis.cartesian <- function(pguide, ginfo, scale, coord, theme) {
 
   # position of this guide
   if (is.null(pguide$position)) {
-    position <- switch(type,
-           h = "bottom",
-           v = "left")
+    if (!is.null(place)) {
+      position <- place
+    } else {
+      position <- switch(type, h = "bottom", v = "left")
+    }
   } else {
     position <- pguide$position
   }
@@ -99,7 +101,7 @@ pguide_gengrob.axis.cartesian <- function(pguide, ginfo, scale, coord, theme) {
 }
 
 #' @S3method pguide_gengrob.axis flip
-pguide_gengrob.axis.flip <- function(pguide, ginfo, scale, coord, theme) {
+pguide_gengrob.axis.flip <- function(pguide, ginfo, scale, coord, theme, place = NULL) {
 
   # aes of this axis
   if ("x" %in% scale$aesthetics)     type <- "v"
@@ -130,7 +132,7 @@ pguide_gengrob.axis.flip <- function(pguide, ginfo, scale, coord, theme) {
 }
 
 #' @S3method pguide_gengrob.axis polar
-pguide_gengrob.axis.polar <- function(pguide, ginfo, scale, coord, theme) {
+pguide_gengrob.axis.polar <- function(pguide, ginfo, scale, coord, theme, place = NULL) {
   
   # aes of this axis
   if(coord$theta %in% scale$aesthetics) {

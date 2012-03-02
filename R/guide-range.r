@@ -1,4 +1,7 @@
-#' Axis guide
+# TODO: float range doesn't need outer padding and the line, not
+#       the center, should be aligned
+
+#' Range guide
 #'
 #' @export
 #' @param title NYI
@@ -33,7 +36,7 @@ guide_range <- function(
 }
 
 #' @S3method pguide_gengrob.range cartesian
-pguide_gengrob.range.cartesian <- function(pguide, ginfo, scale, coord, theme) {
+pguide_gengrob.range.cartesian <- function(pguide, ginfo, scale, coord, theme, place = NULL) {
 
   # aes of this axis
   if ("x" %in% scale$aesthetics)     type <- "h"
