@@ -236,13 +236,13 @@ facet_render.grid <- function(facet, panel, coord, theme, geom_grobs) {
     poffset_col <- 1 + switch(facet$strip$v, left = nstripV, top = 0, 0) + 1
 
     # row/col indices of panels, margins, guides, and strips
-    panels <- list(r = (seq(nrow) - 1) * 2 + poffset_row,
-                   c = (seq(ncol) - 1) * 2 + poffset_col)
-    margins <- list(r = (seq(nrow - 1) - 1) * 2 + poffset_row + 1,
-                    c = (seq(ncol - 1) - 1) * 2 + poffset_col + 1)
+    panels <- list(r = (seq_len(nrow) - 1) * 2 + poffset_row,
+                   c = (seq_len(ncol) - 1) * 2 + poffset_col)
+    margins <- list(r = (seq_len(nrow - 1) - 1) * 2 + poffset_row + 1,
+                    c = (seq_len(ncol - 1) - 1) * 2 + poffset_col + 1)
     guides <- list(r = c(1, dim[1]), c = c(1, dim[2]))
-    strips <- list(r = switch(facet$strip$h, null = NULL, top = 1 + seq(nstripH), bottom = dim[1] - seq(nstripH)),
-                   c = switch(facet$strip$v, null = NULL, left = 1 + seq(nstripV), right = dim[2] - seq(nstripV)))
+    strips <- list(r = switch(facet$strip$h, null = NULL, top = 1 + seq_len(nstripH), bottom = dim[1] - seq_len(nstripH)),
+                   c = switch(facet$strip$v, null = NULL, left = 1 + seq_len(nstripV), right = dim[2] - seq_len(nstripV)))
   })
 
   table <- gtable(widths = seq_len(gtinfo$dim[2]), heights = seq_len(gtinfo$dim[1]))

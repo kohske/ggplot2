@@ -126,122 +126,65 @@ facet_render.wrap <- function(facet, panel, coord, theme, geom_grobs) {
   nrow <- max(layout$ROW)
   n <- nrow(layout)
 
-  panels <- facet_panels(facet, panel, coord, theme, geom_grobs)
-  
-  guide_grobs<- facet_axes(facet, panel, coord, theme)
-  
-  # should be S3?
-  # guides are a list whose length is number of panel.
-  # each element has list of t, l, b, and r.
-  # grobs of guides are places the corresponding location.
-  # but this will be improved.
-  #
-  # first, create gtable of full size
-  # second, add_grob
-  guides <- facet_wrap_place_guides(guide_grobs, panel, facet)
-  
-  strips <- facet_strips(facet, panel, theme)
-
-  # each panel is 6r x 6c
-  # guide, strip, panel, strip, gudie, blank
-  size <- c(6, 6)
-
-  # full size of whole panel
-  gt_dim <- c(6 * nrow, 6 * ncol)
-
-  # panel number and location -> l/t of gtable
-  # tlbr: guide (center +/- 2)
-  # NWSE: strip (center +/- 1)
-  # retunrs t/l (row/col)
-  find_pos <- function(p, loc = "panel") {
-    loc <- switch(loc, panel =, float = c(0, 0),
-                  top = c(-2, 0), left = c(0, -2), bottom = c(2, 0), right = c(0, 2),
-                  N = c(-1, 0), W = c(0, -1), S = c(1, 0), E = c(0, 1))
-    pr <- subset(layout, PANEL == p)$ROW
-    pc <- subset(layout, PANEL == p)$COL
-    t <- size[1] * (pr - 1) + loc[1] + 3
-    l <- size[2] * (pc - 1) + loc[2] + 3
-    c(t, l)
-  }
-  
-  # create gtable
-  gt <- gtable(widths = rep(unit(1/gt_dim[2], "null"), gt_dim[2]),
-               heights = rep(unit(1/gt_dim[1], "null"), gt_dim[1]),
-               respect = respect)
-
-  # place grobs on gtable
-  for (p in seq_along(panels)) {
-
-    # panel
-    loc <- find_pos(p, "panel")
-    gt <- gtable_add_grob(gt, list(panels[[p]]), loc[1], loc[2], clip = "on", name = panels[[p]]$name)
-
-    # strip
-    if (!is.null(facet$strip)) {
-      loc <- find_pos(p, switch(facet$strip, top = "N", left = "W", bottom = "S", right = "E"))
-      gt <- gtable_add_grob(gt, list(strips$t[[p]]), loc[1], loc[2], clip = "on", name = panels[[p]]$name)
-    }
-
-    # guides
-    guide <- guides[[p]]
-    for (pos in names(guide)) { # names(guide) is tlbr
-      for (g in guide[[pos]]) {
-        loc <- find_pos(p, pos)
-        gt <- gtable_add_grob(gt, g, loc[1], loc[2], clip = "off", name = g$name)
-      }
-    }
-  }
+  table <- gtable(widths = rep(1, 6 * ncol), heights = rep(1, 6 * nrow))
+  table <- facet_axes(facet, table, panel, coord, theme)
+  table <- facet_strips(facet, table, panel, theme)
+  table <- facet_panels(facet, table, panel, coord, theme, geom_grobs)
 
   # width/height of gtable
   zero <- unit(0, "mm")
-  gt$heights <- do.call("unit.c",
-                        llply(seq(nrow(gt)), function(i)
-                              do.call("max", c(list(zero), llply(gt$grobs[which(gt$layout$t==i)], grobHeight)))))
-  gt$widths <- do.call("unit.c",
-                       llply(seq(ncol(gt)), function(i)
-                             do.call("max", c(list(zero), llply(gt$grobs[which(gt$layout$l==i)], grobWidth)))))
+  heights <- llply(seq_len(nrow(table)), function(i)
+                   do.call("max", c(list(zero), llply(table$grobs[which(table$layout$t==i)], grobHeight))))
+  widths <- llply(seq_len(ncol(table)), function(i)
+                  do.call("max", c(list(zero), llply(table$grobs[which(table$layout$l==i)], grobWidth))))
 
-  # each panel is 1/n null
-  ppos <- ldply(seq(n), find_pos)
-  gt$heights[unique(ppos$V1)] <- list(unit(1/nrow, "null"))
-  gt$widths[unique(ppos$V2)] <- list(unit(1/ncol, "null"))
+  # each panel is 1 null
+  ppos <- ldply(seq_len(n), function(p) facet_position_grob_wrap(NULL, panel$layout, "panel", p))
+  heights[unique(ppos$V1)] <- list(unit(1, "null"))
+  widths[unique(ppos$V2)] <- list(unit(1, "null"))
   
   # margin b/w panel
   vspace <- unit(height_cm(theme$panel.margin), "cm")
   hspace <- unit(width_cm(theme$panel.margin), "cm")
-  gt$widths[6 * seq(ncol-1)] <- list(hspace)
-  gt$heights[6 * seq(nrow-1)] <- list(vspace)
+  widths[6 * seq_len(ncol-1)] <- list(hspace)
+  heights[6 * seq_len(nrow-1)] <- list(vspace)
 
-  gt
+  table$widths <- do.call("unit.c", widths)
+  table$heights <- do.call("unit.c", heights)
+  table
 }
 
 #' @S3method facet_panels wrap
-facet_panels.wrap <- function(facet, panel, coord, theme, geom_grobs) {
-  panels <- panel$layout$PANEL
-  lapply(panels, function(i) {
-    fg <- coord_render_fg(coord, panel$range[[i]], theme)
-    bg <- coord_render_bg(coord, panel$range[[i]], theme)
-    
-    geom_grobs <- lapply(geom_grobs, "[[", i)
-    panel_grobs <- c(list(bg), geom_grobs, list(fg))
-    
-    ggname(paste("panel", i, sep = "-"), 
-      gTree(children = do.call("gList", panel_grobs)))
-  })
+facet_panels.wrap <- function(facet, table, panel, coord, theme, geom_grobs) {
+  for (p in as.numeric(panel$layout$PANEL)) {
+    fg <- coord_render_fg(coord, panel$range[[p]], theme)
+    bg <- coord_render_bg(coord, panel$range[[p]], theme)
+    grobs <- lapply(geom_grobs, "[[", p)
+    panel_grobs <- c(list(bg), grobs, list(fg))
+    grob <- ggname(paste("panel", p, sep = "-"), 
+                   gTree(children = do.call("gList", panel_grobs)))
+    loc <- facet_position_grob_wrap(NULL, panel$layout, "panel", p)
+    table <- gtable_add_grob(table, list(grob), loc[1], loc[2], clip = "off", name = grob$name)
+  }
+  table
 }
 
 #' @S3method facet_strips wrap
-facet_strips.wrap <- function(facet, panel, theme) {
-  labels_df <- panel$layout[names(facet$facets)]
-  labels_df[] <- llply(labels_df, format, justify = "none")
-  
-  labels <- apply(labels_df, 1, paste, collapse=", ")
-
-  list(t = llply(labels, ggstrip, theme = theme))
+facet_strips.wrap <- function(facet, table, panel, theme) {
+  pl <- panel$layout
+  pl$label <- mdply(subset(pl, select = c(names(facet$facets))),
+                    function(...) c(label = paste(llply(list(...), format, justify = "none"),
+                                      collapse = ", ")))$label
+  grobs <- llply(pl$label, ggstrip, theme = theme)
+  for (p in seq_len(nrow(pl))) {
+    loc <- facet_position_grob_wrap(NULL, pl, "strip", pl[p, ]$PANEL, facet$strip)
+    table <- gtable_add_grob(table, list(grobs[[p]]), loc[1], loc[2], clip = "off", name = grobs[[p]]$name)
+  }
+  table
 }
 
 #' @S3method facet_axes wrap
-facet_axes.wrap <- function(facet, panel, coord, theme) {
+facet_axes.wrap <- function(facet, table, panel, coord, theme) {
   place <- list(h = switch(facet$strip, top = "bottom", bottom = "top", NULL),
                 v = switch(facet$strip, left = "right", right = "left", NULL))
   guides <- list(x = llply(unique(panel$layout$SCALE_X),
@@ -251,10 +194,7 @@ facet_axes.wrap <- function(facet, panel, coord, theme) {
   guides$x <- llply(guides$x, Filter, f = Negate(is.null))
   guides$y <- llply(guides$y, Filter, f = Negate(is.null))
   guides
-}
 
-#' @keywords internal
-facet_wrap_place_guides <- function(guides, panel, facet) {
   pl <- panel$layout
 
   # positions of guides
@@ -271,7 +211,8 @@ facet_wrap_place_guides <- function(guides, panel, facet) {
                      float = which(pl$PANEL == 1))
       }
       for (p in ps) {
-        axes[[p]][[pos]] <- c(axes[[p]][[pos]], list(guides$x[[pi]][[gi]]))
+        loc <- facet_position_grob_wrap(NULL, pl, "guide", p, pos)
+        table <- gtable_add_grob(table, list(guides$x[[pi]][[gi]]), loc[1], loc[2], clip = "off", name = guides$x[[pi]][[gi]]$name)
       }
     }
   }
@@ -287,14 +228,32 @@ facet_wrap_place_guides <- function(guides, panel, facet) {
                      float = which(pl$PANEL == 1))
       }
       for (p in ps) {
-        axes[[p]][[pos]] <- c(axes[[p]][[pos]], list(guides$y[[pi]][[gi]]))
+        loc <- facet_position_grob_wrap(NULL, pl, "guide", p, pos)
+        table <- gtable_add_grob(table, list(guides$y[[pi]][[gi]]), loc[1], loc[2], clip = "off", name = guides$y[[pi]][[gi]]$name)
       }
     }
   }
-  axes
+  table  
+}
+
+#' @keywords internal
+facet_wrap_place_guides <- function(guides, panel, facet) {
 }
 
 #' @S3method facet_vars wrap
 facet_vars.wrap <- function(facet) {
   paste(lapply(facet$facets, paste, collapse = ", "), collapse = " ~ ")
 }
+
+facet_position_grob_wrap <- function(gtinfo, layout, type, p, pos = NULL) {
+  loc <- switch(type,
+                panel = c(0, 0),
+                guide = switch(pos, top = c(-2, 0), left = c(0, -2), bottom = c(2, 0), right = c(0, 2), float = c(0, 0)),
+                strip = switch(pos, top = c(-1, 0), left = c(0, -1), bottom = c(1, 0), right = c(0, 1)))
+  pr <- subset(layout, PANEL == p)$ROW
+  pc <- subset(layout, PANEL == p)$COL
+  t <- 6 * (pr - 1) + loc[1] + 3
+  l <- 6 * (pc - 1) + loc[2] + 3
+  c(t, l)
+}
+
