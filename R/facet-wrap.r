@@ -59,7 +59,9 @@ facet_wrap <- function(facets, nrow = NULL, ncol = NULL, scales = "fixed", shrin
     x = any(scales %in% c("free_x", "free")),
     y = any(scales %in% c("free_y", "free"))
   )
-  
+
+  if (!is.null(strip)) strip <- match.arg(strip, c("top", "right", "bottom", "left"))
+    
   facet(
     facets = as.quoted(facets), free = free, shrink = shrink,
     as.table = as.table, drop = drop,
@@ -104,6 +106,9 @@ facet_render.wrap <- function(facet, panel, coord, theme, geom_grobs) {
   
   # If user hasn't set aspect ratio, and we have fixed scales, then
   # ask the coordinate system if it wants to specify one
+
+  # TODO
+  # now not work with coord_polar when free_x or free_y
   aspect_ratio <- theme$aspect.ratio
   if (is.null(aspect_ratio) && !facet$free$x && !facet$free$y) {
     aspect_ratio <- coord_aspect(coord, panel$ranges[[1]])
@@ -122,6 +127,7 @@ facet_render.wrap <- function(facet, panel, coord, theme, geom_grobs) {
   n <- nrow(layout)
 
   panels <- facet_panels(facet, panel, coord, theme, geom_grobs)
+  
   guide_grobs<- facet_axes(facet, panel, coord, theme)
   
   # should be S3?
@@ -236,10 +242,12 @@ facet_strips.wrap <- function(facet, panel, theme) {
 
 #' @S3method facet_axes wrap
 facet_axes.wrap <- function(facet, panel, coord, theme) {
+  place <- list(h = switch(facet$strip, top = "bottom", bottom = "top", NULL),
+                v = switch(facet$strip, left = "right", right = "left", NULL))
   guides <- list(x = llply(unique(panel$layout$SCALE_X),
-                   function(i) llply(panel$x_scales[[i]]$guide, pguide_gengrob, panel$ranges[[i]], panel$x_scales[[i]], coord, theme)),
+                   function(i) llply(panel$x_scales[[i]]$guide, pguide_gengrob, panel$ranges[[i]], panel$x_scales[[i]], coord, theme, place$h)),
                  y = llply(unique(panel$layout$SCALE_Y),
-                   function(i) llply(panel$y_scales[[i]]$guide, pguide_gengrob, panel$ranges[[i]], panel$y_scales[[i]], coord, theme)))
+                   function(i) llply(panel$y_scales[[i]]$guide, pguide_gengrob, panel$ranges[[i]], panel$y_scales[[i]], coord, theme, place$v)))
   guides$x <- llply(guides$x, Filter, f = Negate(is.null))
   guides$y <- llply(guides$y, Filter, f = Negate(is.null))
   guides
