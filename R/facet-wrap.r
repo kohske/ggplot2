@@ -120,13 +120,13 @@ facet_render.wrap <- function(facet, panel, coord, theme, geom_grobs) {
   } else {
     respect <- TRUE
   }
-  
+
   layout <- panel$layout
   ncol <- max(layout$COL)
   nrow <- max(layout$ROW)
   n <- nrow(layout)
 
-  table <- gtable(widths = rep(1, 6 * ncol), heights = rep(1, 6 * nrow))
+  table <- gtable(widths = rep(1, 6 * ncol), heights = rep(1, 6 * nrow), respect = TRUE)
   table <- facet_axes(facet, table, panel, coord, theme)
   table <- facet_strips(facet, table, panel, theme)
   table <- facet_panels(facet, table, panel, coord, theme, geom_grobs)
@@ -140,7 +140,7 @@ facet_render.wrap <- function(facet, panel, coord, theme, geom_grobs) {
 
   # each panel is 1 null
   ppos <- ldply(seq_len(n), function(p) facet_position_grob_wrap(NULL, panel$layout, "panel", p))
-  heights[unique(ppos$V1)] <- list(unit(1, "null"))
+  heights[unique(ppos$V1)] <- list(unit(1 * aspect_ratio, "null"))
   widths[unique(ppos$V2)] <- list(unit(1, "null"))
   
   # margin b/w panel
