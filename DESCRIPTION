@@ -25,7 +25,8 @@ Imports:
     scales,
     memoise,
     proto,
-    MASS
+    MASS,
+    stringr
 Suggests:
     quantreg,
     Hmisc,
