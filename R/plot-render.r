@@ -176,7 +176,7 @@ ggplot_gtable <- function(data) {
 #' @param vp viewport to draw plot in
 #' @param ... other arguments not used by this method
 #' @keywords hplot
-#' @S3method print ggplot
+#' @export
 #' @method print ggplot
 print.ggplot <- function(x, newpage = is.null(vp), vp = NULL, ...) {
   set_last_plot(x)
@@ -195,6 +195,11 @@ print.ggplot <- function(x, newpage = is.null(vp), vp = NULL, ...) {
   
   invisible(data)
 }
+#' @rdname print.ggplot
+#' @method plot ggplot
+#' @export
+plot.ggplot <- print.ggplot
+
 
 #' Generate a ggplot2 plot grob.
 #' 
