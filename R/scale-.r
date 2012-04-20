@@ -224,8 +224,10 @@ scale_map.continuous <- function(scale, x, limits = scale_limits(scale)) {
 }
 
 #' @S3method scale_map discrete
-scale_map.discrete <- function(scale, x, limits = scale_limits(scale)) {
-  n <- length(limits)
+scale_map.discrete <- function(scale, x) {
+  limits <- scale_limits(scale)
+
+  n <- sum(!is.na(limits))
   pal <- scale$palette(n)
 
   if (is.null(names(pal))) {
